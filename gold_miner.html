@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Gold Miner — СаноатГеоКонтех</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Boogaloo&family=Nunito:wght@400;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#FFD700;--gold2:#FFA500;--dark:#0d0800;--brown:#3d1f00;
+  --rock:#888;--sky:#0a1a2e;--green:#2d5a1b;
+}
+body{background:var(--dark);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:'Nunito',sans-serif;overflow:hidden;touch-action:none;}
+
+/* SCREENS */
+.screen{display:none;flex-direction:column;align-items:center;justify-content:center;width:100%;max-width:520px;padding:20px;}
+.screen.active{display:flex;}
+
+/* TITLE SCREEN */
+#screen-title{background:radial-gradient(ellipse at 50% 30%,#1a0e00 0%,#0d0800 100%);}
+.game-logo{font-family:'Boogaloo',cursive;font-size:52px;color:var(--gold);text-shadow:0 0 30px #ffd70088,0 4px 0 #7a5000;letter-spacing:2px;text-align:center;line-height:1.1;margin-bottom:6px;}
+.game-sub{font-size:13px;color:#c8a050;letter-spacing:3px;text-transform:uppercase;margin-bottom:32px;text-align:center;}
+.company-tag{font-size:11px;color:#6a4a20;letter-spacing:2px;text-transform:uppercase;margin-bottom:28px;}
+.name-label{font-size:14px;color:#c8a050;margin-bottom:8px;align-self:flex-start;}
+#name-input{width:100%;padding:12px 16px;background:#1a0e00;border:1.5px solid #7a5000;border-radius:10px;color:#FFD700;font-family:'Nunito',sans-serif;font-size:15px;outline:none;margin-bottom:20px;}
+#name-input:focus{border-color:var(--gold);}
+#name-input::placeholder{color:#5a3a10;}
+.btn-play{background:linear-gradient(135deg,#c87000,#FFD700,#c87000);color:#3d1f00;font-family:'Boogaloo',cursive;font-size:22px;padding:14px 48px;border:none;border-radius:12px;cursor:pointer;letter-spacing:1px;transition:transform 0.1s,box-shadow 0.1s;box-shadow:0 4px 20px #ffd70044;}
+.btn-play:hover{transform:scale(1.05);box-shadow:0 6px 28px #ffd70066;}
+.btn-play:active{transform:scale(0.97);}
+.btn-sec{background:transparent;color:#c8a050;border:1.5px solid #7a5000;font-family:'Nunito',sans-serif;font-size:14px;padding:10px 28px;border-radius:10px;cursor:pointer;margin-top:12px;transition:all 0.15s;}
+.btn-sec:hover{background:#1a0e00;border-color:var(--gold);color:var(--gold);}
+
+/* GAME SCREEN */
+#screen-game{padding:8px;}
+#hud{display:flex;gap:8px;width:100%;max-width:520px;margin-bottom:6px;flex-wrap:wrap;}
+.hud-card{background:#1a0e00;border:1px solid #7a5000;border-radius:8px;padding:5px 12px;flex:1;min-width:80px;text-align:center;}
+.hud-label{font-size:10px;color:#7a5000;text-transform:uppercase;letter-spacing:1px;}
+.hud-val{font-family:'Boogaloo',cursive;font-size:20px;color:var(--gold);}
+.hud-val.time-warn{color:#ff4444;animation:pulse 0.5s infinite alternate;}
+@keyframes pulse{from{opacity:1}to{opacity:0.5}}
+#canvas{display:block;border-radius:12px;border:1.5px solid #7a5000;background:#0d0800;touch-action:none;cursor:none;width:100%;max-width:520px;}
+#hint{font-size:12px;color:#7a5000;margin-top:6px;text-align:center;min-height:16px;}
+#bomb-bar{display:flex;gap:6px;align-items:center;margin-top:6px;}
+.bomb-icon{width:22px;height:22px;background:#222;border-radius:50%;border:1.5px solid #555;display:flex;align-items:center;justify-content:center;font-size:13px;}
+.bomb-icon.active{border-color:#ff6600;background:#3a1500;}
+#btn-bomb{background:#3a1500;border:1.5px solid #ff6600;color:#ff9900;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;padding:5px 16px;border-radius:8px;cursor:pointer;transition:all 0.1s;}
+#btn-bomb:disabled{opacity:0.3;cursor:default;}
+#btn-bomb:not(:disabled):hover{background:#5a2000;border-color:#ffaa00;}
+
+/* END SCREEN */
+#screen-end{background:radial-gradient(ellipse at 50% 30%,#1a0e00 0%,#0d0800 100%);}
+.end-title{font-family:'Boogaloo',cursive;font-size:36px;color:var(--gold);text-shadow:0 0 20px #ffd70066;margin-bottom:4px;}
+.end-rank{font-size:16px;color:#c8a050;margin-bottom:4px;}
+.end-score{font-family:'Boogaloo',cursive;font-size:48px;color:#FFD700;margin-bottom:20px;}
+.end-score span{font-size:18px;color:#c8a050;}
+
+/* LEADERBOARD SCREEN */
+#screen-lb{background:radial-gradient(ellipse at 50% 30%,#1a0e00 0%,#0d0800 100%);}
+.lb-title{font-family:'Boogaloo',cursive;font-size:32px;color:var(--gold);margin-bottom:20px;}
+.lb-table{width:100%;max-width:400px;border-collapse:collapse;}
+.lb-table th{font-size:11px;color:#7a5000;text-transform:uppercase;letter-spacing:1px;padding:6px 10px;border-bottom:1px solid #3d1f00;text-align:left;}
+.lb-table td{padding:8px 10px;font-size:14px;color:#c8a050;border-bottom:0.5px solid #1a0e00;}
+.lb-table tr.me td{color:var(--gold);font-weight:700;}
+.lb-table tr:first-child td{font-size:16px;}
+.rank-badge{display:inline-block;width:22px;height:22px;border-radius:50%;background:#7a5000;color:#FFD700;font-size:12px;font-weight:700;text-align:center;line-height:22px;margin-right:4px;}
+.rank-1{background:#c87000;}
+.rank-2{background:#888;}
+.rank-3{background:#8B4513;}
+</style>
+</head>
+<body>
+
+<!-- TITLE -->
+<div id="screen-title" class="screen active">
+  <div class="game-logo">Gold<br>Miner</div>
+  <div class="game-sub">Золотодобытчик</div>
+  <div class="company-tag">СаноатГеоКонтех Хизмат</div>
+  <div class="name-label">Ваш ник (Telegram):</div>
+  <input id="name-input" type="text" placeholder="@username или имя" maxlength="20" autocomplete="off">
+  <button class="btn-play" id="btn-play">ИГРАТЬ</button>
+  <button class="btn-sec" id="btn-lb-open">🏆 Таблица рекордов</button>
+</div>
+
+<!-- GAME -->
+<div id="screen-game" class="screen">
+  <div id="hud">
+    <div class="hud-card"><div class="hud-label">Золото</div><div class="hud-val" id="hud-gold">0 кг</div></div>
+    <div class="hud-card"><div class="hud-label">Время</div><div class="hud-val" id="hud-time">45</div></div>
+    <div class="hud-card"><div class="hud-label">Уровень</div><div class="hud-val" id="hud-level">1</div></div>
+  </div>
+  <canvas id="canvas" width="520" height="370"></canvas>
+  <div id="bomb-bar">
+    <div id="bomb-icons"></div>
+    <button id="btn-bomb" disabled>💣 Бомба</button>
+    <span id="hint">Тап или пробел — бросить крюк</span>
+  </div>
+</div>
+
+<!-- END -->
+<div id="screen-end" class="screen">
+  <div class="end-title" id="end-title">Время вышло!</div>
+  <div class="end-rank" id="end-rank"></div>
+  <div class="end-score"><span id="end-score">0</span> <span>кг</span></div>
+  <button class="btn-play" id="btn-again">ЕЩЁ РАЗ</button>
+  <button class="btn-sec" id="btn-lb-end">🏆 Таблица рекордов</button>
+</div>
+
+<!-- LEADERBOARD -->
+<div id="screen-lb" class="screen">
+  <div class="lb-title">🏆 Рекорды</div>
+  <table class="lb-table">
+    <thead><tr><th>#</th><th>Игрок</th><th>Кг золота</th><th>Уровень</th></tr></thead>
+    <tbody id="lb-body"></tbody>
+  </table>
+  <button class="btn-sec" style="margin-top:20px" id="btn-lb-back">← Назад</button>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const W = 520, H = 370;
+canvas.width = W; canvas.height = H;
+
+let playerName = 'Игрок';
+let gold = 0, timeLeft = 45, level = 1, gameRunning = false;
+let angle = 0, angleDir = 1, angleSpeed = 0.022;
+let hookState = 'idle';
+let hook = null;
+let items = [], particles = [], floatTexts = [];
+let bombs = 3, bombMode = false;
+let timerInterval = null;
+
+const MINER_X = W/2, MINER_Y = 55, ROPE_Y = 72;
+
+const ITEM_DEFS = [
+  {type:'gold',  r:10, color:'#FFD700',stroke:'#b8860b',weight:60,  value:5,  label:'+5кг'},
+  {type:'gold',  r:14, color:'#FFD700',stroke:'#b8860b',weight:80,  value:10, label:'+10кг'},
+  {type:'gold',  r:20, color:'#FFD700',stroke:'#c87000',weight:130, value:25, label:'+25кг'},
+  {type:'diamond',r:9, color:'#7CF0E8',stroke:'#0F6E56',weight:25,  value:50, label:'+50кг'},
+  {type:'bag',   r:13, color:'#C0875A',stroke:'#7B4B2A',weight:100, value:15, label:'+15кг'},
+  {type:'rock',  r:18, color:'#888780',stroke:'#5F5E5A',weight:220, value:-2, label:'-2кг'},
+  {type:'rock',  r:12, color:'#B4B2A9',stroke:'#888780',weight:150, value:0,  label:'0'},
+  {type:'bomb',  r:11, color:'#1a1a1a',stroke:'#ff6600',weight:50,  value:0,  label:'💣 БОМБА'},
+];
+
+function spawnItems() {
+  items = [];
+  const rows = [125,162,200,240,282,325,362];
+  const count = 10 + level * 3;
+  for (let i = 0; i < count; i++) {
+    const def = ITEM_DEFS[Math.floor(Math.random() * ITEM_DEFS.length)];
+    items.push({
+      ...def,
+      x: 40 + Math.random() * (W - 80),
+      y: rows[Math.floor(Math.random() * rows.length)] + (Math.random()-0.5)*14,
+      grabbed: false, exploded: false
+    });
+  }
+  // guarantee at least 1 bomb per level
+  const def = ITEM_DEFS.find(d=>d.type==='bomb');
+  items.push({...def, x:80+Math.random()*(W-160), y:200+Math.random()*120, grabbed:false, exploded:false});
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startGame() {
+  gold = 0; timeLeft = 45 + (level-1)*5; gameRunning = true;
+  bombs = 3; bombMode = false;
+  hook = null; hookState = 'idle'; angle = 0; angleDir = 1;
+  items = []; particles = []; floatTexts = [];
+  updateHUD();
+  updateBombUI();
+  spawnItems();
+  showScreen('screen-game');
+  document.getElementById('hint').textContent = 'Тап или пробел — бросить крюк';
+  clearInterval(timerInterval);
+  timerInterval = setInterval(()=>{
+    timeLeft--;
+    updateHUD();
+    if (timeLeft <= 0) endGame();
+  }, 1000);
+  if (!rafId) gameLoop();
+}
+
+function updateHUD() {
+  document.getElementById('hud-gold').textContent = gold + ' кг';
+  const tv = document.getElementById('hud-time');
+  tv.textContent = timeLeft;
+  tv.className = 'hud-val' + (timeLeft <= 10 ? ' time-warn' : '');
+  document.getElementById('hud-level').textContent = level;
+}
+
+function updateBombUI() {
+  const bar = document.getElementById('bomb-icons');
+  bar.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const d = document.createElement('div');
+    d.className = 'bomb-icon' + (i < bombs ? ' active' : '');
+    d.textContent = i < bombs ? '💣' : '○';
+    bar.appendChild(d);
+  }
+  const btn = document.getElementById('btn-bomb');
+  btn.disabled = bombs <= 0 || hookState !== 'idle' || !gameRunning;
+  btn.textContent = bombMode ? '💣 Отмена' : '💣 Бомба (' + bombs + ')';
+  btn.style.background = bombMode ? '#5a2000' : '#3a1500';
+  btn.style.borderColor = bombMode ? '#ffaa00' : '#ff6600';
+}
+
+function shoot() {
+  if (!gameRunning) return;
+  if (hookState !== 'idle') return;
+  const len = 10;
+  hook = {
+    x: MINER_X + Math.sin(angle)*len,
+    y: ROPE_Y + Math.cos(angle)*len,
+    dx: Math.sin(angle)*9,
+    dy: Math.cos(angle)*9,
+    len, item: null
+  };
+  hookState = 'shooting';
+  document.getElementById('hint').textContent = '';
+}
+
+function dropBomb() {
+  if (bombs <= 0 || hookState !== 'idle' || !gameRunning) return;
+  bombs--;
+  updateBombUI();
+  bombMode = false;
+  // explode in center-ish area
+  const bx = W/2 + (Math.random()-0.5)*200;
+  const by = 200 + Math.random()*140;
+  explodeAt(bx, by, 80);
+  addParticles(bx, by, '#ff6600', 20);
+  floatTexts.push({x:bx, y:by-20, text:'💥 ВЗРЫВ!', life:1, color:'#ff9900', size:18});
+}
+
+function explodeAt(ex, ey, radius) {
+  let bonus = 0;
+  for (let it of items) {
+    if (it.grabbed || it.exploded) continue;
+    const d = Math.hypot(it.x - ex, it.y - ey);
+    if (d < radius + it.r) {
+      it.exploded = true;
+      it.grabbed = true;
+      if (it.type !== 'rock' && it.type !== 'bomb') {
+        bonus += it.value;
+        addParticles(it.x, it.y, '#FFD700', 8);
+      } else {
+        addParticles(it.x, it.y, '#ff4400', 6);
+      }
+    }
+  }
+  if (bonus > 0) {
+    gold = Math.max(0, gold + bonus);
+    updateHUD();
+    floatTexts.push({x:ex+20, y:ey-40, text:'+'+bonus+'кг', life:1, color:'#FFD700', size:16});
+  }
+  // shockwave particle ring
+  for (let a = 0; a < Math.PI*2; a += 0.3) {
+    particles.push({x:ex+Math.cos(a)*radius*0.7, y:ey+Math.sin(a)*radius*0.7,
+      vx:Math.cos(a)*2, vy:Math.sin(a)*2, r:4, life:1, color:'#ff8800'});
+  }
+}
+
+function retract() {
+  hookState = 'retracting';
+}
+
+function addParticles(x, y, color, n=10) {
+  for (let i=0;i<n;i++) {
+    particles.push({x,y,vx:(Math.random()-0.5)*5,vy:(Math.random()-0.5)*5,r:2+Math.random()*3,life:1,color});
+  }
+}
+
+function endGame() {
+  clearInterval(timerInterval);
+  gameRunning = false;
+  hookState = 'idle'; hook = null;
+  cancelAnimationFrame(rafId); rafId = null;
+
+  // rank
+  let rank = 'Стажёр', emoji = '⛏';
+  if (gold >= 200) { rank='Эксперт-геолог'; emoji='🏅'; }
+  else if (gold >= 130) { rank='Мастер-добытчик'; emoji='🥇'; }
+  else if (gold >= 70)  { rank='Геолог'; emoji='🥈'; }
+
+  document.getElementById('end-title').textContent = emoji + ' Время вышло!';
+  document.getElementById('end-rank').textContent = rank;
+  document.getElementById('end-score').textContent = gold;
+  showScreen('screen-end');
+
+  if (gold >= 150) level++;
+  saveScore(playerName, gold, level);
+}
+
+// LEADERBOARD
+function saveScore(name, score, lv) {
+  const lb = getLeaderboard();
+  lb.push({name, score, lv, date: new Date().toLocaleDateString('ru')});
+  lb.sort((a,b)=>b.score-a.score);
+  const top = lb.slice(0,10);
+  localStorage.setItem('gm_lb', JSON.stringify(top));
+}
+
+function getLeaderboard() {
+  try { return JSON.parse(localStorage.getItem('gm_lb')) || []; }
+  catch { return []; }
+}
+
+function renderLeaderboard() {
+  const lb = getLeaderboard();
+  const tbody = document.getElementById('lb-body');
+  tbody.innerHTML = '';
+  if (!lb.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="color:#7a5000;text-align:center;padding:20px">Пока нет результатов</td></tr>';
+    return;
+  }
+  lb.forEach((entry, i) => {
+    const tr = document.createElement('tr');
+    if (entry.name === playerName) tr.className = 'me';
+    const badge = `<span class="rank-badge rank-${i+1}">${i+1}</span>`;
+    tr.innerHTML = `<td>${badge}</td><td>${entry.name}</td><td>${entry.score} кг</td><td>${entry.lv}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// DRAW
+function drawBg() {
+  ctx.fillStyle = '#0a1a2e'; ctx.fillRect(0,0,W,90);
+  // stars
+  ctx.fillStyle='#ffffff';
+  [[30,15],[90,35],[160,12],[240,28],[330,10],[410,25],[480,15],[510,38],[60,48],[200,55],[360,42],[450,50]].forEach(s=>{
+    ctx.beginPath();ctx.arc(s[0],s[1],1,0,Math.PI*2);ctx.fill();
+  });
+  // ground surface
+  ctx.fillStyle='#2d5a1b';ctx.fillRect(0,88,W,10);
+  ctx.fillStyle='#4a7c20';ctx.fillRect(0,85,W,6);
+  // dirt layers
+  const layers=['#3d1f00','#4a2500','#572d00','#643500','#714000','#7d4a00'];
+  layers.forEach((c,i)=>{ctx.fillStyle=c;ctx.fillRect(0,96+i*46,W,46);});
+  // rock veins
+  ctx.strokeStyle='rgba(0,0,0,0.3)';ctx.lineWidth=1;
+  [[0,140,W,140],[0,186,W,186],[0,232,W,232],[0,278,W,278],[0,324,W,324]].forEach(l=>{
+    ctx.beginPath();ctx.moveTo(l[0],l[1]);ctx.lineTo(l[2],l[3]);ctx.stroke();
+  });
+}
+
+function drawMiner() {
+  // body
+  ctx.fillStyle='#c8a87a';ctx.fillRect(MINER_X-12,32,24,26);
+  // legs
+  ctx.fillStyle='#7a5000';ctx.fillRect(MINER_X-10,56,9,14);ctx.fillRect(MINER_X+1,56,9,14);
+  // hat
+  ctx.fillStyle='#3a2800';ctx.fillRect(MINER_X-15,22,30,8);ctx.fillRect(MINER_X-11,12,22,11);
+  // lamp
+  ctx.fillStyle='#FFD700';ctx.beginPath();ctx.arc(MINER_X,17,4,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(255,215,0,0.2)';ctx.beginPath();ctx.arc(MINER_X,17,12,0,Math.PI*2);ctx.fill();
+  // rope
+  ctx.strokeStyle='#c8a87a';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(MINER_X,ROPE_Y);
+  if(hook){ctx.lineTo(hook.x,hook.y);}
+  else{ctx.lineTo(MINER_X+Math.sin(angle)*55,ROPE_Y+Math.cos(angle)*55);}
+  ctx.stroke();
+  // swing hook tip
+  if(!hook){
+    const hx=MINER_X+Math.sin(angle)*55,hy=ROPE_Y+Math.cos(angle)*55;
+    ctx.strokeStyle='#FFD700';ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(hx,hy,5,0,Math.PI*2);ctx.stroke();
+  }
+}
+
+function drawHook() {
+  if(!hook) return;
+  ctx.strokeStyle='#c8a87a';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(MINER_X,ROPE_Y);ctx.lineTo(hook.x,hook.y);ctx.stroke();
+  // hook head
+  ctx.save();ctx.translate(hook.x,hook.y);
+  ctx.strokeStyle='#FFD700';ctx.lineWidth=2.5;
+  ctx.beginPath();ctx.arc(0,0,6,0,Math.PI*1.6);ctx.stroke();
+  ctx.restore();
+  if(hook.item) drawItemAt(hook.item,hook.x,hook.y+hook.item.r+12);
+}
+
+function drawItemAt(it,x,y){
+  ctx.save();
+  ctx.beginPath();
+  if(it.type==='diamond'){ctx.moveTo(x,y-it.r);ctx.lineTo(x+it.r,y);ctx.lineTo(x,y+it.r);ctx.lineTo(x-it.r,y);ctx.closePath();}
+  else{ctx.arc(x,y,it.r,0,Math.PI*2);}
+  ctx.fillStyle=it.color;ctx.fill();
+  ctx.strokeStyle=it.stroke;ctx.lineWidth=2;ctx.stroke();
+  if(it.type==='bomb'){
+    // fuse
+    ctx.strokeStyle='#ff6600';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(x+it.r*0.6,y-it.r*0.7);ctx.quadraticCurveTo(x+it.r*1.2,y-it.r*1.5,x+it.r*0.8,y-it.r*1.8);ctx.stroke();
+    ctx.fillStyle='#ff9900';ctx.beginPath();ctx.arc(x+it.r*0.8,y-it.r*1.8,2.5,0,Math.PI*2);ctx.fill();
+  } else if(it.type==='diamond'){
+    ctx.fillStyle='#085041';ctx.font='bold 8px sans-serif';ctx.textAlign='center';ctx.fillText('◆',x,y+3);
+  } else if(it.type==='bag'){
+    ctx.fillStyle='#4a2900';ctx.font='9px sans-serif';ctx.textAlign='center';ctx.fillText('$',x,y+3);
+  } else if(it.type==='gold'){
+    ctx.fillStyle='#7a4a00';ctx.font='8px sans-serif';ctx.textAlign='center';ctx.fillText('Au',x,y+3);
+  }
+  ctx.restore();
+}
+
+function drawItems(){
+  items.forEach(it=>{
+    if(!it.grabbed && !it.exploded) drawItemAt(it,it.x,it.y);
+  });
+}
+
+function drawParticles(){
+  particles.forEach(p=>{
+    ctx.globalAlpha=p.life;ctx.fillStyle=p.color;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();
+  });
+  ctx.globalAlpha=1;
+}
+
+function drawFloatTexts(){
+  floatTexts.forEach(ft=>{
+    ctx.globalAlpha=ft.life;
+    ctx.fillStyle=ft.color;
+    ctx.font=`bold ${ft.size||15}px Boogaloo,sans-serif`;
+    ctx.textAlign='center';ctx.fillText(ft.text,ft.x,ft.y);
+  });
+  ctx.globalAlpha=1;
+}
+
+function update(){
+  if(!gameRunning) return;
+  if(hookState==='idle'){
+    angle+=angleDir*angleSpeed;
+    if(angle>1.25){angle=1.25;angleDir=-1;}
+    if(angle<-1.25){angle=-1.25;angleDir=1;}
+  }
+  if(hookState==='shooting'){
+    const spd = hook.item ? 3 : 9;
+    hook.x+=hook.dx*(spd/9);hook.y+=hook.dy*(spd/9);hook.len+=spd;
+    if(hook.x<0||hook.x>W||hook.y>H+20||hook.y<0){retract();return;}
+    for(let it of items){
+      if(it.grabbed||it.exploded) continue;
+      const d=Math.hypot(hook.x-it.x,hook.y-it.y);
+      if(d<it.r+7){
+        it.grabbed=true;
+        if(it.type==='bomb'){
+          // bomb explodes on contact
+          hook.item=null;
+          hookState='idle';hook=null;
+          explodeAt(it.x,it.y,85);
+          addParticles(it.x,it.y,'#ff6600',25);
+          floatTexts.push({x:it.x,y:it.y-20,text:'💥 ВЗРЫВ!',life:1.2,color:'#ff9900',size:18});
+          bombs = Math.min(3, bombs+1); // get bomb back as powerup
+          updateBombUI();
+          return;
+        }
+        hook.item=it;retract();return;
+      }
+    }
+  }
+  if(hookState==='retracting'){
+    const dx=MINER_X-hook.x,dy=ROPE_Y-hook.y;
+    const dist=Math.hypot(dx,dy);
+    const spd=hook.item ? Math.max(2,9-hook.item.weight/35) : 11;
+    if(dist<spd+2){
+      if(hook.item){
+        const v=hook.item.value;
+        gold=Math.max(0,gold+v);
+        updateHUD();
+        const col=v>0?'#FFD700':'#ff4444';
+        addParticles(MINER_X,ROPE_Y+20,col,8);
+        floatTexts.push({x:MINER_X,y:ROPE_Y-10,text:(v>0?'+':'')+v+'кг',life:1,color:col,size:16});
+      }
+      hook=null;hookState='idle';
+      updateBombUI();
+    } else {
+      hook.x+=dx/dist*spd;hook.y+=dy/dist*spd;
+      if(hook.item){hook.item.x=hook.x;hook.item.y=hook.y+hook.item.r+12;}
+    }
+  }
+  particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vx*=0.95;p.vy*=0.95;p.life-=0.04;});
+  particles=particles.filter(p=>p.life>0);
+  floatTexts.forEach(f=>{f.y-=1;f.life-=0.02;});
+  floatTexts=floatTexts.filter(f=>f.life>0);
+}
+
+let rafId = null;
+function gameLoop(){
+  update();
+  ctx.clearRect(0,0,W,H);
+  drawBg();drawItems();drawMiner();drawHook();drawParticles();drawFloatTexts();
+  // swing indicator
+  if(hookState==='idle'){
+    const hx=MINER_X+Math.sin(angle)*55,hy=ROPE_Y+Math.cos(angle)*55;
+    ctx.strokeStyle='rgba(255,215,0,0.35)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+    ctx.beginPath();ctx.moveTo(MINER_X,ROPE_Y);ctx.lineTo(hx,hy);ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  rafId=requestAnimationFrame(gameLoop);
+}
+
+// INPUT
+canvas.addEventListener('click',()=>{if(gameRunning)shoot();});
+canvas.addEventListener('touchstart',e=>{e.preventDefault();if(gameRunning)shoot();},{passive:false});
+document.addEventListener('keydown',e=>{
+  if(e.code==='Space'){e.preventDefault();if(gameRunning)shoot();}
+  if(e.code==='KeyB'){if(gameRunning&&bombs>0&&hookState==='idle')dropBomb();}
+});
+
+document.getElementById('btn-bomb').addEventListener('click',()=>{
+  if(gameRunning&&bombs>0&&hookState==='idle') dropBomb();
+});
+
+// NAV
+document.getElementById('btn-play').addEventListener('click',()=>{
+  const n=document.getElementById('name-input').value.trim();
+  playerName = n || 'Аноним';
+  level=1;startGame();
+});
+document.getElementById('btn-again').addEventListener('click',()=>{level=1;startGame();});
+document.getElementById('btn-lb-open').addEventListener('click',()=>{renderLeaderboard();showScreen('screen-lb');});
+document.getElementById('btn-lb-end').addEventListener('click',()=>{renderLeaderboard();showScreen('screen-lb');});
+document.getElementById('btn-lb-back').addEventListener('click',()=>{
+  const prev=document.querySelector('[data-prev]');
+  showScreen(gameRunning?'screen-game':'screen-title');
+});
+
+// init canvas
+drawBg();
+ctx.fillStyle='rgba(0,0,0,0.4)';ctx.fillRect(0,0,W,H);
+ctx.fillStyle='#FFD700';ctx.font='bold 36px Boogaloo,sans-serif';ctx.textAlign='center';ctx.fillText('Gold Miner',W/2,H/2-10);
+ctx.fillStyle='#c8a050';ctx.font='16px Nunito,sans-serif';ctx.fillText('Введите ник и нажмите ИГРАТЬ',W/2,H/2+25);
+</script>
+</body>
+</html>
